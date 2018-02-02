@@ -1,4 +1,4 @@
-import logging; logging.basicConfig(level=logging.INFO)
+import logging
 
 import aiomysql, asyncio
 
@@ -7,7 +7,7 @@ def log(sql, args=()):
     logging.info('SQL: %s' % sql)
 
 
-
+#链接池，异步
 async def create_pool(loop, **kw):
     logging.info('create database connection pool...')
     global __pool
@@ -24,6 +24,8 @@ async def create_pool(loop, **kw):
         loop=loop
     )
 
+
+#select方法，异步
 async def select(sql, args, size=None):
     log(sql, args)
     global __pool
@@ -38,8 +40,11 @@ async def select(sql, args, size=None):
         logging.info('rows returned: %s' % len(rs))
         return rs
 
+
+#其他sql方法，异步
 async def execute(sql, args):
     log(sql)
+    global __pool
     with (await __pool) as conn:
         try:
             cur = await conn.cursor()
@@ -50,7 +55,7 @@ async def execute(sql, args):
             raise
         return affected
 
-
+#sql语句占位符
 def create_args_string(num):
     L = []
     for n in range(num):
@@ -58,6 +63,12 @@ def create_args_string(num):
     return ', '.join(L)
 
 class ModelMetaclass(type):
+
+    #  __new__()方法接收到的参数依次是：
+    # 1.当前准备创建的类的对象；
+    # 2.类的名字；
+    # 3.类继承的父类集合；
+    # 4.类的方法集合。
 
     def __new__(cls, name, bases, attrs):
         # 排除Model类本身:
@@ -233,3 +244,13 @@ class TextField(Field):
 
     def __init__(self, name=None, default=None):
         super().__init__(name, 'text', False, default)
+
+
+# 参考：
+# Found model: User
+# Found mapping: email ==> <StringField:email>
+# Found mapping: password ==> <StringField:password>
+# Found mapping: id ==> <IntegerField:uid>
+# Found mapping: name ==> <StringField:username>
+# SQL: insert into User (password,email,username,id) values (?,?,?,?)
+# ARGS: ['my-pwd', 'test@orm.org', 'Michael', 12345]
