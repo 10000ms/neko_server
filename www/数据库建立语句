@@ -1,5 +1,7 @@
 -- schema.sql
 
+
+#根据实际需要创建的datebass名来创建
 drop database if exists awesome;
 
 create database awesome;
