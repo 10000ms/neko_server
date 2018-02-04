@@ -254,3 +254,13 @@ class TextField(Field):
 # Found mapping: name ==> <StringField:username>
 # SQL: insert into User (password,email,username,id) values (?,?,?,?)
 # ARGS: ['my-pwd', 'test@orm.org', 'Michael', 12345]
+
+
+#create_pool： 异步简历mysql连接方法
+#log：后台输出SQL语句方法
+#select：为SQL的select方法，本身没有语句，只创建select的sql语句样式，并用游标输入mysql
+#execute：为SQL的INSERT、UPDATE、DELETE方法，本身没有语句，只创建INSERT、UPDATE、DELETE的sql语句样式，并用游标输入mysql
+#create_args_string:为sql的INSERT语句创建占位符
+
+#ModelMetaclass:Model类的元类，为Model类的继承类创建方法：__mapping__ key和volumn映射；__table__ 表名；__primary_name__ 主键名；__fields__ 除主键以外其他属性名 还有数据库操作的4种方法
+#Model：数据库表映射的被继承类，创建方法类似于：class User(Model):  
