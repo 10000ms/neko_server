@@ -1,7 +1,7 @@
 import time, uuid
 
 #pycharm识别问题：www.orm -> orm
-from www.orm import Model, StringField, BooleanField, FloatField, TextField
+from orm import Model, StringField, BooleanField, FloatField, TextField
 
 
 #简历唯一不重复的id号码
