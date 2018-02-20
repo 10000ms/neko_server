@@ -13,6 +13,8 @@ from jinja2 import Environment, FileSystemLoader
 import orm
 from coroweb import add_routes, add_static
 
+from handlers import cookie2user, COOKIE_NAME
+
 
 # 初始化jinja2模块
 def init_jinja2(app, **kw):
@@ -93,6 +95,22 @@ async def response_factory(app, handler):
         return resp
     return response
 
+
+#提取并解析cookie并绑定在request对象上
+async def auth_factory(app,handler):
+    async def auth(request):
+        logging.info('check user: %s %s' % (request.method, request.path))
+        request.__user__ = None #初始化
+        cookie_str = request.cookies.get(COOKIE_NAME) #读取cookie
+        if cookie_str:
+            user = await cookie2user(cookie_str)
+            if user:
+                logging.info('set current user: %s' % user.email)
+                request.__user__ = user
+        return await handler(request)
+    return auth
+
+
 def datetime_filter(t):
     delta = int(time.time() - t)
     if delta < 60:
@@ -109,7 +127,7 @@ def datetime_filter(t):
 async def init(loop):
     await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='', db='awesome')
     app = web.Application(loop=loop, middlewares=[
-        logger_factory, response_factory
+        logger_factory, response_factory, auth_factory
     ])
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     add_routes(app, 'handlers')
