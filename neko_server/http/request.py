@@ -69,4 +69,3 @@ class Request:
                 self.query[k] = v
         else:
             self.path = part
-
