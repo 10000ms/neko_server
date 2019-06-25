@@ -5,9 +5,9 @@ import _thread
 from conf import setting
 from http.request import Request
 from http.response import Response
-from utils import log
+from utils.log import log
 from component.route import Router
-from views.error import error
+from views.error import route_not_found
 
 
 def response_for_path(request):
@@ -16,8 +16,7 @@ def response_for_path(request):
     没有处理的 path 会返回 404
     """
     r = Router()
-    request_handler = r.get(request.path, error)
-    log('request', request)
+    request_handler = r.get(request.path, route_not_found)
     log('request_handler', request_handler)
     response = request_handler(request)
     if isinstance(response, Response):
@@ -52,8 +51,9 @@ def process_request(connection):
         if request_validation(r) is True:
             request = Request(r)
             response = response_for_path(request)
-            c.sendall(response.make_response())
-            # c.sendall(b'HTTP/1.1 404 NOT FOUND\r\nContent-Type: text/html\r\n\r\n<h1>NOT FOUND</h1>')
+            r = response.make_response()
+            log('send response\n <{}>'.format(r))
+            c.sendall(r)
 
 
 def server_start(host=None, port=None):

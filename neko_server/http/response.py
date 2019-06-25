@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from utils import log
+from utils.log import log
 from conf import setting
 
 

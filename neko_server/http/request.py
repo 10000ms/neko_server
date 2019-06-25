@@ -2,7 +2,7 @@
 from json import loads
 from urllib.parse import unquote_plus
 
-from utils import log
+from utils.log import log
 
 
 class Request:
