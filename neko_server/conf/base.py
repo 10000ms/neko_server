@@ -5,8 +5,7 @@ setting = dict(
     host='127.0.0.1',
     port=9655,
 
-    # RFC 2616
-    standard_format='iso-8859-1',
+    standard_format='utf-8',
 
     http_state={
         200: 'Ok',

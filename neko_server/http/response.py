@@ -13,7 +13,7 @@ class Response:
         self.version = 'HTTP/1.x'
         self.state_code = 200
         self.state_string = setting.http_state[200]
-        self.header = self.base_header
+        self.header = self.base_header.copy()
         self.body = body
         self.cookie = []
 
@@ -53,8 +53,11 @@ class Response:
 
     def make_response(self):
         header = self.formatted_header()
-        r = header + '\r\n' + self.body
+        header = header.encode(setting.standard_format)
+        if not isinstance(self.body, bytes):
+            self.body = self.body.encode(setting.standard_format)
+        r = header + b'\r\n' + self.body
 
         log('Response make_response \r\n', r)
 
-        return r.encode(setting.standard_format)
+        return r

@@ -1,21 +1,38 @@
 # -*- coding: utf-8 -*-
-import copy
+from views.static import static_handler
+from views.index import index_handler
 
 
 class Router:
 
     def __init__(self):
         self._routes = {}
+        self.update_route(static_handler)
+        self.update_route(index_handler)
 
     def set_route(self, routes):
-        self._routes = copy.deepcopy(routes)
+        rs = routes.copy()
+        self._routes = self.analyse_route_dict(rs)
+
+    @staticmethod
+    def analyse_route(route_string):
+        # TODO: 更好的分析模式
+        return route_string.split('/')[1]
+
+    def analyse_route_dict(self, routes):
+        d = {}
+        for k, v in routes.items():
+            key = self.analyse_route(k)
+            d[key] = v
+        return d
 
     def update_route(self, routes):
-        d = copy.deepcopy(routes)
-        self._routes.update(d)
+        rs = routes.copy()
+        self._routes.update(self.analyse_route_dict(rs))
 
     def get(self, path, default):
-        r = self._routes.get(path, default)
+        p = self.analyse_route(path)
+        r = self._routes.get(p, default)
         return r
 
 
