@@ -19,18 +19,18 @@ setting = dict(
     # 本地文件数据库的存放地址
     neko_db_data_path=os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        'data'
+        'data',
     ),
 
     # 静态文件的存放地址
     static_path=os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        'static'
+        'static',
     ),
 
     # html模版文件的存放地址
     template_path=os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        'template'
+        'template',
     ),
 )

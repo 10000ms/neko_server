@@ -60,7 +60,7 @@ def server_start(host=None, port=None):
     if host is None:
         host = setting.host
     if port is None:
-        host = setting.port
+        port = setting.port
 
     log('start web server in {}:{}'.format(host, port))
 

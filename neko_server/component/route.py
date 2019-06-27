@@ -11,29 +11,18 @@ class Router:
         self.update_route(index_handler)
 
     def set_route(self, routes):
-        rs = routes.copy()
-        self._routes = self.analyse_route_dict(rs)
-
-    @staticmethod
-    def analyse_route(route_string):
-        # TODO: 更好的分析模式
-        return route_string.split('/')[1]
-
-    def analyse_route_dict(self, routes):
-        d = {}
-        for k, v in routes.items():
-            key = self.analyse_route(k)
-            d[key] = v
-        return d
+        self._routes = routes.copy()
 
     def update_route(self, routes):
-        rs = routes.copy()
-        self._routes.update(self.analyse_route_dict(rs))
+        d = routes.copy()
+        self._routes.update(d)
 
     def get(self, path, default):
-        p = self.analyse_route(path)
-        r = self._routes.get(p, default)
-        return r
+        for rule, handler in self._routes.items():
+            rule_len = len(rule)
+            if len(path) >= rule_len and path[:rule_len] == rule:
+                return handler
+        return default
 
 
 route = Router()
