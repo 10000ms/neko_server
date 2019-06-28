@@ -4,7 +4,6 @@ from enum import (
     auto,
 )
 
-from conf import setting
 from component.template_loader import TemplateLoader
 
 
@@ -19,6 +18,18 @@ class NodeType(Enum):
 
 
 class TemplateNode:
+    """
+    模版的节点类
+
+    目前支持的节点：
+    1. 纯html节点
+    2. if 判断开始节点： 语法为 {{ if xxx }}，if和xxx中间只可以有一个空格，其中xxx一定要为environment中存在的key
+    3. else 判断else节点：语法为 {{ else }}
+    4. for 循环开始节点：语法为 {{ for yyy in xxx }}，for和xxx中间只可以有一个空格, 其中xxx一定要为environment中存在的key
+    5. end 结束判断和循环的节点：语法为 {{ end }}
+    6. value 变量取值节点：语法为 {{ xxx }} 或 {{ xxx.yyy }}等，可以从字典或者是对象中取值，
+       xxx一定要为environment中存在的key或者是循环开始节点中增加定义的yyy
+    """
 
     def __init__(self, content, html_only=True, father_node=None):
         self.content = content
@@ -46,7 +57,7 @@ class TemplateNode:
     def _analyse_for_node(self):
         temp_content = self.content.strip()
         t = temp_content[4:]
-        self.content = t.split('.')
+        self.content = t.split()
 
     def _analyse_end_node(self):
         self.content = ''
@@ -64,6 +75,9 @@ class TemplateNode:
         self.done = True
 
     def analyse(self):
+        """
+        根据自身不同的节点类型，使用不同的方法进行分析和处理
+        """
         type_analyse_methods = {
             NodeType.html_node: self._analyse_html_node,
             NodeType.if_node: self._analyse_if_node,
@@ -76,6 +90,9 @@ class TemplateNode:
         m()
 
     def type_for_node(self):
+        """
+        分析确实自身节点类型
+        """
         if self.html_only is True:
             self.node_type = NodeType.html_node
         else:
@@ -87,7 +104,7 @@ class TemplateNode:
             elif temp_content == 'else':
                 self.node_type = NodeType.else_node
             elif temp_content == 'end':
-                self.node_type = NodeType.for_node
+                self.node_type = NodeType.end_node
             else:
                 self.node_type = NodeType.value_node
 
@@ -134,11 +151,19 @@ class TemplateNode:
             elif n.node_type == NodeType.else_node and changed is True:
                 raise SyntaxError('模板if语句有多个else！')
             if statement == current_part:
-                r += n.html_from_for_node()
+                r += n.html_from_self(self.environment)
         return r
 
     def html_from_for_node(self):
-        pass
+        iter_item = self.environment[self.content[-1]]
+        r = ''
+        key_name = self.content[0]
+        for i in iter_item:
+            new_environment = self.environment.copy()
+            new_environment.update({key_name: i})
+            for n in self.child_nodes:
+                r += n.html_from_self(new_environment)
+        return r
 
     def html_from_end_node(self):
         return self.content
@@ -153,9 +178,12 @@ class TemplateNode:
                 t = t[c]
             else:
                 t = getattr(t, c)
-        return t
+        return str(t)
 
     def html_from_self(self, environment):
+        """
+        根据自身不同的类型，使用对应方法，输出html
+        """
         type_html_methods = {
             NodeType.html_node: self.html_from_html_node,
             NodeType.if_node: self.html_from_if_node,
@@ -193,7 +221,7 @@ class TemplateNodeManage:
 
 class Render:
 
-    def __init__(self):
+    def __init__(self, setting):
         self.template_loader = TemplateLoader(setting.template_path)
 
     @staticmethod

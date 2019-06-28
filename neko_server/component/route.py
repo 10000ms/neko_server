@@ -23,6 +23,3 @@ class Router:
             if len(path) >= rule_len and path[:rule_len] == rule:
                 return handler
         return default
-
-
-route = Router()

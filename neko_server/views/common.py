@@ -3,14 +3,17 @@ from http.response import Response
 from component.render import Render
 
 
-def redirect(url, state_code=302, state_string='Found'):
-    r = Response()
+def redirect(request, url, state_code=302, state_string='Found'):
+    r = Response(request.setting)
     r.add_header('Location', url)
     r.set_state(state_code, state_string)
     return r
 
 
-def render_template(template, **kwargs):
-    content = Render().render(template, **kwargs)
-    r = Response(content)
+def render_template(request, template, environment=None):
+    if environment is None:
+        environment = {}
+    s = request.setting
+    content = Render(s).render(template, environment)
+    r = Response(request.setting, content)
     return r

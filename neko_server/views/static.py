@@ -2,7 +2,6 @@
 import os
 
 from http.response import Response
-from conf import setting
 from views.error import error
 
 # 常见文件对应的HTTP Content-type
@@ -48,7 +47,7 @@ def static(request):
     # 第一个为'', 第二个为static，移除
     file_path = file_path[2:]
     path = os.path.join(
-        setting.static_path,
+        request.setting.static_path,
         *file_path,
     )
     isfile = os.path.isfile(path)
@@ -61,11 +60,11 @@ def static(request):
         else:
             content_type = default_type
         with open(path, 'rb') as f:
-            r = Response(f.read())
+            r = Response(request.setting, f.read())
             r.add_header('Content-Type', content_type)
             return r
     else:
-        return error()
+        return error(request.setting)
 
 
 static_handler = {

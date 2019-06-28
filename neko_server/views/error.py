@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from http.response import Response
-from conf import setting
 
 
-def error(state_code=404, state_string=None, content=None):
-    e = setting.http_state
+def error(request, state_code=404, state_string=None, content=None):
+    e = request.setting.http_state
     if state_string is None:
         state_string = e.get(state_code, e[500])
     if content is None:
@@ -14,5 +13,5 @@ def error(state_code=404, state_string=None, content=None):
     return r
 
 
-def route_not_found(*args, **kwargs):
-    return error()
+def route_not_found(request):
+    return error(request)

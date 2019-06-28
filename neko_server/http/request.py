@@ -7,7 +7,7 @@ from utils.log import log
 
 class Request:
 
-    def __init__(self, raw_data):
+    def __init__(self, raw_data, setting):
         header, self.body = raw_data.split('\r\n\r\n', 1)
         h = header.split('\r\n')
 
@@ -22,6 +22,8 @@ class Request:
         self.headers = {}
         self.cookies = {}
         self.add_headers(h[1:])
+
+        self.setting = setting
 
         log('Request init over', self.__dict__)
 

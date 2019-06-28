@@ -2,20 +2,23 @@
 import os
 
 from neko_server.server import server_start
-from neko_server.component.route import route
-from neko_server.conf import setting
+from neko_server.component.route import Router
+from neko_server.conf.base import setting as base
+from neko_server.conf.setting_manage import SettingManage
 
 from routes import routes_publish
 
 
-def set_route():
-    route.update_route(routes_publish.publish_handler)
+def route():
+    r = Router()
+    r.update_route(routes_publish.publish_handler)
+    return r
 
 
-def update_setting():
+def setting():
     config_dict = {
         'host': '127.0.0.1',
-        'port': 9655,
+        'port': 9654,
         'static_path': os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'static',
@@ -25,14 +28,16 @@ def update_setting():
             'template',
         ),
     }
-    setting.update_setting(config_dict)
+    s = SettingManage(base)
+    s.update_setting(config_dict)
+    return s
 
 
 def main():
-    update_setting()
-    set_route()
+    s = setting()
+    r = route()
     # 启动服务器
-    server_start()
+    server_start(s, r)
 
 
 if __name__ == '__main__':
