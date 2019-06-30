@@ -7,6 +7,8 @@ setting = dict(
 
     standard_format='utf-8',
 
+    security_key='a7s8d7aS98d7a8Rsd7aG8sd90',
+
     http_state={
         200: 'Ok',
         400: 'Bad Request',

@@ -6,6 +6,8 @@ from http.request import Request
 from http.response import Response
 from utils.log import log
 from views.error import route_not_found
+from db.mysql import MysqlOperate
+from db.model import Model
 
 
 def response_for_path(request, route):
@@ -54,9 +56,21 @@ def process_request(connection, setting, route):
             c.sendall(r)
 
 
+def set_model(setting):
+    MysqlOperate.host = setting.mysql['host']
+    MysqlOperate.port = setting.mysql['port']
+    MysqlOperate.user = setting.mysql['user']
+    MysqlOperate.password = setting.mysql['password']
+    MysqlOperate.db = setting.mysql['db']
+
+    Model.security_key = setting.security_key
+
+
 def server_start(setting, route):
     host = setting.host
     port = setting.port
+
+    set_model(setting)
 
     log('start web server in {}:{}'.format(host, port))
 

@@ -1,115 +1,125 @@
 # -*- coding: utf-8 -*-
-import os
-import json
-
-from conf import setting
-
-
-def save(data, path):
-    """
-    把一个dict或者是一个list写入文件
-    :param data: dict或者是list
-    :param path: 文件保存的路径
-    """
-    s = json.dumps(data, indent=2, ensure_ascii=False)
-    with open(path, 'w+', encoding='utf-8') as f:
-        f.write(s)
+from db.mysql import MysqlOperate
+from db.field import (
+    Field,
+    IntegerField,
+    DatetimeField,
+)
 
 
-def load(path):
-    """
-    从文件导入数据，并转化为dict或者是list
-    :param path: 文件保存的路径
-    """
-    with open(path, 'w+', encoding='utf-8') as f:
-        s = f.read()
-        return json.loads(s)
+_mysql_operate = None
+
+
+def mysql_operate():
+    global _mysql_operate
+    if _mysql_operate is None:
+        _mysql_operate = MysqlOperate()
+    return _mysql_operate
+
+
+def check_mysql(func):
+    def wrapper(cls, *args, **kwargs):
+        # 没有建立mysql操作对象则建立连接
+        if cls.mysql is None:
+            cls.mysql = mysql_operate()
+        r = func(cls, *args, **kwargs)
+        return r
+    return wrapper
 
 
 class Model:
 
-    def __init__(self, data_dict):
-        self.id = data_dict.get('id', None)
+    # 操作数据库的对象
+    mysql = None
+    # model类中实际的field
+    field_items = None
+
+    security_key = None
+
+    # 默认创建field
+    id = IntegerField('id', primary_key=True)
+    create_time = DatetimeField('create_time')
+    change_time = DatetimeField('change_time')
 
     @classmethod
-    def db_path(cls):
-        """
-        获取本地的db
-        使用类名作为文件名
-        """
-        class_name = cls.__name__
-        path = os.path.join(
-            setting.neko_db_data_path,
-            class_name
-        )
-        return path
-
-    @classmethod
-    def create(cls, data_dict):
-        m = cls(data_dict)
-        m.save()
+    @check_mysql
+    def new(cls, data_dict):
+        cls._add_field_items()
+        m = cls()
+        d = {}
+        for name, field in cls.field_items():
+            if name in data_dict:
+                value = data_dict[name]
+                check = field.check_value(value)
+                if check is True:
+                    d[name] = value
+                else:
+                    raise ValueError('value错误, field:<{}>, value:<{}>'.format(name, value))
+            else:
+                d[name] = field.default
+        for k, v in d.items():
+            setattr(m, k, v)
         return m
 
     @classmethod
-    def delete(cls, model_id):
-        ms = cls.all()
-        for i, m in enumerate(ms):
-            if m.id == model_id:
-                del ms[i]
-                break
-        data = [m.__dict__ for m in ms]
-        p = cls.db_path()
-        save(data, p)
+    def _add_field_items(cls):
+        if cls.field_items is None:
+            d = {}
+            for i in dir(cls):
+                if isinstance(i, Field):
+                    d[i.name] = i
+            cls.field_items = d
 
     @classmethod
+    def table_name(cls):
+        return cls.__name__.lower()
+
+    @classmethod
+    @check_mysql
+    def delete(cls, model_ids):
+        cls.mysql.delete(model_ids)
+
+    @classmethod
+    @check_mysql
     def all(cls):
-        p = cls.db_path()
-        data = load(p)
-        ms = [cls(m) for m in data]
-        return ms
+        models = cls.mysql.select_all(cls.table_name())
+        r = []
+        for m in models:
+            model = cls().new(m)
+            r.append(model)
+        return r
 
     @classmethod
+    @check_mysql
     def find_by(cls, **kwargs):
-        for m in cls.all():
-            exist = True
-            for k, v in kwargs.items():
-                if not hasattr(m, k) or not getattr(m, k) == v:
-                    exist = False
-            if exist:
-                return m
+        model = cls.mysql.select_one(cls.table_name(), kwargs)
+        r = cls().new(model)
+        return r
 
     @classmethod
+    @check_mysql
     def find_all(cls, **kwargs):
-        ms = []
-        for m in cls.all():
-            exist = True
-            for k, v in kwargs.items():
-                if not hasattr(m, k) or not getattr(m, k) == v:
-                    exist = False
-            if exist:
-                ms.append(m)
-        return ms
+        models = cls.mysql.select_all_by(cls.table_name(), kwargs)
+        r = []
+        for m in models:
+            model = cls().new(m)
+            r.append(model)
+        return r
 
+    @check_mysql
     def save(self):
-        ms = self.all()
+        values = self.value_from_field()
         if self.id is None:
-            # 新建模式
-            if len(ms) > 0:
-                self.id = ms[-1].id + 1
-            else:
-                self.id = 1
-            ms.append(self)
+            self.mysql.insert(self.table_name(), values)
         else:
-            # 修改模式
-            for i, m in enumerate(ms):
-                if m.id == self.id:
-                    ms[i] = self
-        data = [m.__dict__ for m in ms]
-        p = self.db_path()
-        save(data, p)
+            self.mysql.update(self.table_name(), values)
+
+    def value_from_field(self):
+        r = {f: getattr(self, f) for f in self.field_items.keys()}
+        return r
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        properties = ['{}: <{}>'.format(k, v) for k, v in self.__dict__.items()]
+        class_name = self.table_name()
+        properties = ['{}: <{}>'.format(k, v) for k, v in self.value_from_field()]
         s = '\n'.join(properties)
         return '<{}\n{}>\n'.format(class_name, s)
