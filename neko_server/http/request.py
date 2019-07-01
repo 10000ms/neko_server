@@ -13,6 +13,7 @@ class Request:
 
         parts = h[0].split()
         self.method = parts[0]
+        self.method = self.method.lower()
         self.version = parts[-1]
         part = parts[1]
         self.path = ''

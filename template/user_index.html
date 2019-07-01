@@ -14,10 +14,10 @@
     <div><span>欢迎用户： {{ current_user }}</span></div>
     <div>
         {{ if login }}
-        <a href=""><span>登出</span></a>
+        <a href="/user/logout"><span>登出</span></a>
         {{ else }}
-        <a href=""><span>登录</span></a>
-        <a href=""><span>注册</span></a>
+        <a href="/user/login"><span>登录</span></a>
+        <a href="/user/register"><span>注册</span></a>
         {{ end }}
     </div>
     <div><span>系统所有用户</span></div>

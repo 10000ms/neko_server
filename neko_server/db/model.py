@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 from db.mysql import MysqlOperate
 from db.field import (
     IntegerField,
@@ -117,6 +119,9 @@ class Model:
             self.mysql.insert(self.table_name(), values)
         else:
             self.mysql.update(self.table_name(), values)
+
+    def renew_update_time(self):
+        self.change_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     def value_from_field(self):
         r = {f: str(getattr(self, f))for f in self.field_items.keys()}

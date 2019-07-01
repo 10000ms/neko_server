@@ -2,31 +2,30 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>Neko Server</title>
-    <style type="text/css">
-        .index-div {
-            margin-top: 30px;
-            text-align: center;
-        }
-
-        .index-img {
-            width: 137px;
-            height: 125px;
-            margin: 30px;
-        }
-        .main-div {
-
+    <title>所有留言</title>
+    <style>
+        div {
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-<div class="index-div">
-    <img src="/static/img/index.gif" alt="index" class="index-img"/>
-    <h1>欢迎使用Neko Server</h1>
-    <div class="main-div">
-        <span>留言板</span>
-        <span>用户管理</span>
+<div style="text-align: center">
+    <div>
+        {{ if login }}
+        <a href="/note/add"><span>添加留言</span></a>
+        {{ end }}
     </div>
+    <div><span>系统所有留言</span></div>
+    {{ for n in note}}
+    <div>
+        <span>{{ n.username }} :{{ n.title }} -- {{ n.content }}</span>
+        {{ if login }}
+        <a href="/note/edit?id={{ n.id }}"><span>编辑留言</span></a>
+        <a href="/user/logout?id={{ n.id }}"><span>删除留言</span></a>
+        {{ end }}
+    </div>
+    {{ end }}
 </div>
 </body>
 </html>

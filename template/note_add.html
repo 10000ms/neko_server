@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>新增留言</title>
+    <style>
+        div {
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+<div style="text-align: center">
+    <form action="/note/add" method="post">
+    <div>
+        <label>
+            标题：
+            <input type="text" name="title"/>
+        </label>
+        <label>
+            留言：
+            <input type="text" name="content"/>
+        </label>
+        <button type="submit">提交</button>
+    </div>
+    </form>
+</div>
+</body>
+</html>

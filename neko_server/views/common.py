@@ -3,8 +3,11 @@ from http.response import Response
 from component.render import Render
 
 
-def redirect(request, url, state_code=302, state_string='Found'):
-    r = Response(request.setting)
+def redirect(request, url, state_code=302, state_string='Found', response=None):
+    if response is None:
+        r = Response(request.setting)
+    else:
+        r = response
     r.add_header('Location', url)
     r.set_state(state_code, state_string)
     return r

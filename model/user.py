@@ -24,6 +24,10 @@ class User(Model):
         user = cls.find_by(session=session)
         return user
 
+    def logout(self):
+        self.session = uuid4().hex
+        self.save()
+
     @classmethod
     def salted_password(cls, password):
         salted = password + cls.security_key
@@ -34,11 +38,7 @@ class User(Model):
     def login(cls, account, password):
         salted = cls.salted_password(password)
         u = cls.find_by(account=account, password=salted)
-        if u is not None:
-            result = '登陆成功'
-        else:
-            result = '用户名或密码错误'
-        return u, result
+        return u
 
     @classmethod
     def register(cls, account, password, username):
