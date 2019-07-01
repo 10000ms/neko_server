@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import hashlib
+from uuid import uuid4
 
 from neko_server.db.model import Model
 from neko_server.db.field import StringField
@@ -10,6 +11,18 @@ class User(Model):
     account = StringField('account')
     password = StringField('password')
     username = StringField('username')
+    session = StringField('session')
+
+    def create_session(self):
+        s = uuid4().hex
+        self.session = s
+        self.save()
+        return s
+
+    @classmethod
+    def current_user(cls, session):
+        user = cls.find_by(session=session)
+        return user
 
     @classmethod
     def salted_password(cls, password):

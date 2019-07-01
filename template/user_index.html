@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>所有用户</title>
+    <style>
+        div {
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+<div style="text-align: center">
+    <div><span>欢迎用户： {{ current_user }}</span></div>
+    <div>
+        {{ if login }}
+        <a href=""><span>登出</span></a>
+        {{ else }}
+        <a href=""><span>登录</span></a>
+        <a href=""><span>注册</span></a>
+        {{ end }}
+    </div>
+    <div><span>系统所有用户</span></div>
+    {{ for u in user}}
+    <div>
+        <span>帐号：</span><span>{{ u.account }}</span>
+        <span>用户名：</span><span>{{ u.username }}</span>
+    </div>
+    {{ end }}
+</div>
+</body>
+</html>

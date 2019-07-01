@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from db.mysql import MysqlOperate
 from db.field import (
-    Field,
     IntegerField,
     DatetimeField,
 )
+from utils.log import log
 
 
 _mysql_operate = None
@@ -47,7 +47,7 @@ class Model:
         cls._add_field_items()
         m = cls()
         d = {}
-        for name, field in cls.field_items():
+        for name, field in cls.field_items.items():
             if name in data_dict:
                 value = data_dict[name]
                 check = field.check_value(value)
@@ -57,17 +57,20 @@ class Model:
                     raise ValueError('value错误, field:<{}>, value:<{}>'.format(name, value))
             else:
                 d[name] = field.default
+        log('model new', d, data_dict, cls.field_items.items())
         for k, v in d.items():
             setattr(m, k, v)
         return m
 
     @classmethod
     def _add_field_items(cls):
+        model_field = 'model_field'
         if cls.field_items is None:
             d = {}
             for i in dir(cls):
-                if isinstance(i, Field):
-                    d[i.name] = i
+                attr = getattr(cls, i)
+                if hasattr(attr, model_field) and getattr(attr, model_field) is True:
+                    d[i] = attr
             cls.field_items = d
 
     @classmethod
@@ -83,6 +86,7 @@ class Model:
     @check_mysql
     def all(cls):
         models = cls.mysql.select_all(cls.table_name())
+        log('model all', cls.table_name(), cls.mysql, models)
         r = []
         for m in models:
             model = cls().new(m)
@@ -115,7 +119,7 @@ class Model:
             self.mysql.update(self.table_name(), values)
 
     def value_from_field(self):
-        r = {f: getattr(self, f) for f in self.field_items.keys()}
+        r = {f: str(getattr(self, f))for f in self.field_items.keys()}
         return r
 
     def __repr__(self):

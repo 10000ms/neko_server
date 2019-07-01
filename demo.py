@@ -7,10 +7,12 @@ from neko_server.conf.base import setting as base
 from neko_server.conf.setting_manage import SettingManage
 
 from routes import routes_publish
+from routes import routes_user
 
 
 def route():
     r = Router()
+    r.update_route(routes_user.user_handler)
     r.update_route(routes_publish.publish_handler)
     return r
 
@@ -27,6 +29,13 @@ def setting():
             os.path.dirname(os.path.abspath(__file__)),
             'template',
         ),
+        'mysql': {
+            'host': '127.0.0.1',
+            'port': 3306,
+            'user': 'root',
+            'password': '123456',
+            'db': 'neko',
+        },
     }
     s = SettingManage(base)
     s.update_setting(config_dict)

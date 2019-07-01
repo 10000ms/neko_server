@@ -68,5 +68,5 @@ def static(request):
 
 
 static_handler = {
-    '/static': static,
+    '/static/*': static,
 }

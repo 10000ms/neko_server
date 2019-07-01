@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pymysql
 
+from utils.log import log
+
 
 def check_initialize(func):
     def wrapper(self, *args, **kwargs):
@@ -24,6 +26,7 @@ class MysqlOperate:
         self.conn = None
 
     def initialize(self):
+        log('MysqlOperate, initialize', self.host, self.port, self.user, self.password, self.db)
         self.conn = pymysql.connect(
             host=self.host,
             port=self.port,
@@ -31,6 +34,7 @@ class MysqlOperate:
             password=self.password,
             db=self.db,
             charset='utf8mb4',
+            autocommit=True,
             cursorclass=pymysql.cursors.DictCursor
         )
 
