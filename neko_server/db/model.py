@@ -30,13 +30,19 @@ def check_mysql(func):
 
 
 class Model:
+    """
+    ORM类
+    使用new方法获取对象实例
+
+    这个方法会把原本对应field的类属性转移，而使用实际值
+    """
 
     # 操作数据库的对象
     mysql = None
     # model类中实际的field
     field_items = None
 
-    security_key = None
+    security_key = '63865f1c34cc4ba2bfa72032de6d9d03'
 
     # 默认创建field
     id = IntegerField('id', primary_key=True)
@@ -82,7 +88,7 @@ class Model:
     @classmethod
     @check_mysql
     def delete(cls, model_ids):
-        cls.mysql.delete(model_ids)
+        cls.mysql.delete(cls.table_name(), model_ids)
 
     @classmethod
     @check_mysql
@@ -99,8 +105,9 @@ class Model:
     @check_mysql
     def find_by(cls, **kwargs):
         model = cls.mysql.select_one(cls.table_name(), kwargs)
-        r = cls().new(model)
-        return r
+        for m in model:
+            r = cls().new(m)
+            return r
 
     @classmethod
     @check_mysql
@@ -115,10 +122,11 @@ class Model:
     @check_mysql
     def save(self):
         values = self.value_from_field()
-        if self.id is None:
-            self.mysql.insert(self.table_name(), values)
-        else:
+        i = self.id
+        if isinstance(i, int) and i > 0:
             self.mysql.update(self.table_name(), values)
+        else:
+            self.mysql.insert(self.table_name(), values)
 
     def renew_update_time(self):
         self.change_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -129,6 +137,6 @@ class Model:
 
     def __repr__(self):
         class_name = self.table_name()
-        properties = ['{}: <{}>'.format(k, v) for k, v in self.value_from_field()]
+        properties = ['{}: <{}>'.format(k, v) for k, v in self.value_from_field().items()]
         s = '\n'.join(properties)
-        return '<{}\n{}>\n'.format(class_name, s)
+        return '<\n{}\n{}\n>\n'.format(class_name, s)

@@ -8,11 +8,14 @@ from model.note import Note
 
 
 def note_index(request):
+    """
+    留言主页路由
+    """
     session = request.cookies.get('session', None)
     login = False
     if session is not None:
         u = User.current_user(session)
-        if u:
+        if u is not None:
             login = True
     notes = Note.all()
     d = {
@@ -23,6 +26,9 @@ def note_index(request):
 
 
 def note_add(request):
+    """
+    留言增加路由
+    """
     m = request.method
     if m == 'get':
         return render_template(request, 'note_add.html')
@@ -41,25 +47,34 @@ def note_add(request):
 
 
 def note_edit(request):
-    m = request.method
-    if m == 'get':
-        return render_template(request, 'note_add.html')
-    elif m == 'post':
-        d = request.form()
-        note_id = request.query.get('id', None)
-        if note_id is not None:
-            note = Note.find_by(id=note_id)
-            note.title = d['title']
-            note.content = d['content']
-            note.save()
-            return redirect(request, '/note')
-        else:
-            return error(request, 404)
-    else:
-        return error(request, 405)
+    """
+    留言编辑路由
+    """
+    note_id = request.query.get('id', None)
+    if note_id is not None:
+        note = Note.find_by(id=note_id)
+        if note is not None:
+            m = request.method
+            if m == 'get':
+                d = {
+                    'note': note,
+                }
+                return render_template(request, 'note_edit.html', d)
+            elif m == 'post':
+                d = request.form()
+                note.title = d['title']
+                note.content = d['content']
+                note.save()
+                return redirect(request, '/note')
+            else:
+                return error(request, 405)
+    return error(request, 400)
 
 
 def note_delete(request):
+    """
+    留言删除路由
+    """
     note_id = request.query.get('id', None)
     if note_id is not None:
         Note.delete([note_id, ])

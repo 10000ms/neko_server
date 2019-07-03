@@ -6,6 +6,9 @@ from utils.log import log
 
 
 class Request:
+    """
+    request对象
+    """
 
     def __init__(self, raw_data, setting):
         header, self.body = raw_data.split('\r\n\r\n', 1)
@@ -29,6 +32,9 @@ class Request:
         log('Request init over', self.__dict__)
 
     def form(self):
+        """
+        将 form data转化为dict
+        """
         body = unquote_plus(self.body)
         args = body.split('&')
         r = {}

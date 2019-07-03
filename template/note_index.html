@@ -19,10 +19,10 @@
     <div><span>系统所有留言</span></div>
     {{ for n in note}}
     <div>
-        <span>{{ n.username }} :{{ n.title }} -- {{ n.content }}</span>
+        <span>{{ n.user }} :{{ n.title }} -- {{ n.content }}</span>
         {{ if login }}
         <a href="/note/edit?id={{ n.id }}"><span>编辑留言</span></a>
-        <a href="/user/logout?id={{ n.id }}"><span>删除留言</span></a>
+        <a href="/note/delete?id={{ n.id }}"><span>删除留言</span></a>
         {{ end }}
     </div>
     {{ end }}

@@ -8,16 +8,25 @@ from neko_server.conf.setting_manage import SettingManage
 
 from routes import routes_publish
 from routes import routes_user
+from routes import routes_note
 
 
 def route():
+    """
+    注册路由
+    """
     r = Router()
     r.update_route(routes_user.user_handler)
+    r.update_route(routes_note.note_handler)
+
     r.update_route(routes_publish.publish_handler)
     return r
 
 
 def setting():
+    """
+    设置setting
+    """
     config_dict = {
         'host': '127.0.0.1',
         'port': 9654,

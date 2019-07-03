@@ -29,6 +29,12 @@ class TemplateNode:
     5. end 结束判断和循环的节点：语法为 {{ end }}
     6. value 变量取值节点：语法为 {{ xxx }} 或 {{ xxx.yyy }}等，可以从字典或者是对象中取值，
        xxx一定要为environment中存在的key或者是循环开始节点中增加定义的yyy
+
+    处理流程：
+    1. 先确定节点类型
+    2. 根据节点类型进行预处理
+    3. 传入数据的时候根据数据渲染不同的节点
+    4. 返回html
     """
 
     def __init__(self, content, html_only=True, father_node=None):
@@ -198,6 +204,9 @@ class TemplateNode:
 
 
 class TemplateNodeManage:
+    """
+    节点管理器，存放主节点
+    """
 
     def __init__(self):
         self.node_list = []
@@ -226,6 +235,9 @@ class Render:
 
     @staticmethod
     def renew_search_state(new_item='}'):
+        """
+        获取搜索模板语法的标签和状态
+        """
         html = False
         if new_item == '{':
             return '}', html
@@ -234,6 +246,9 @@ class Render:
             return '{', html
 
     def content_to_node_manage(self, content):
+        """
+        将文本内容转化为分析好的node管理器
+        """
         manage = TemplateNodeManage()
         last_index = 0
         index = 0
@@ -252,6 +267,11 @@ class Render:
         return manage
 
     def render(self, template, environment):
+        """
+        渲染出 html
+        :param template: 模板名
+        :param environment: 环境dict
+        """
         content = self.template_loader.get_source(template)
         template_manage = self.content_to_node_manage(content)
         html = template_manage.html_from_node(environment)

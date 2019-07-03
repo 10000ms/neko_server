@@ -3,11 +3,9 @@ import socket
 import _thread
 
 from http.request import Request
-from http.response import Response
 from utils.log import log
 from views.error import route_not_found
 from db.mysql import MysqlOperate
-from db.model import Model
 
 
 def response_for_path(request, route):
@@ -19,10 +17,10 @@ def response_for_path(request, route):
     request_handler = r.get(request.path, route_not_found)
     log('request_handler', request_handler)
     response = request_handler(request)
-    if isinstance(response, Response):
+    if hasattr(response, 'make_response'):
         return response
     else:
-        raise TypeError('返回类型错误，必须为http.response.Response或其子类')
+        raise TypeError('返回类型错误，必须为http.response.Response或其子类, 而返回的是：<{}>'.format(response))
 
 
 def request_from_connection(connection, setting):
@@ -57,16 +55,20 @@ def process_request(connection, setting, route):
 
 
 def set_model(setting):
+    """
+    设置属性
+    """
     MysqlOperate.host = setting.mysql['host']
     MysqlOperate.port = setting.mysql['port']
     MysqlOperate.user = setting.mysql['user']
     MysqlOperate.password = setting.mysql['password']
     MysqlOperate.db = setting.mysql['db']
 
-    Model.security_key = setting.security_key
-
 
 def server_start(setting, route):
+    """
+    启动服务器
+    """
     host = setting.host
     port = setting.port
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
+# 框架基础配置
 setting = dict(
     host='127.0.0.1',
     port=9655,

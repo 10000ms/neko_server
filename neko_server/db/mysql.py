@@ -53,10 +53,11 @@ class MysqlOperate:
     @check_initialize
     def insert(self, table_name, fields):
         fields_name = ['`{}`'.format(k) for k in fields.keys()]
-        place_item = '%s' * len(fields_name)
+        place_item = ['%s'] * len(fields_name)
+        place_item = ','.join(place_item)
         fields_name = ','.join(fields_name)
-        fields_value = tuple(fields.values())
-        sql_insert = '''
+        value = tuple(fields.values())
+        sql = '''
         INSERT INTO
             `{}` ({})
         VALUES
@@ -64,26 +65,30 @@ class MysqlOperate:
         '''.format(table_name, fields_name, place_item)
         # 参数拼接要用 %s，execute 中的参数传递必须是一个 tuple 类型
         with self.conn.cursor() as cursor:
-            cursor.execute(sql_insert, fields_value)
+            log('mysql insert', table_name, sql, value)
+            cursor.execute(sql, value)
 
     @check_initialize
     def delete(self, table_name, delete_ids):
         delete_ids = ','.join([str(int(delete_id)) for delete_id in delete_ids])
-        sql_delete = '''
+        sql = '''
         DELETE FROM
             `{}`
         WHERE
             id in ({});
         '''.format(table_name, delete_ids)
         with self.conn.cursor() as cursor:
-            cursor.execute(sql_delete)
+            log('mysql delete', table_name, sql)
+            cursor.execute(sql)
 
     @check_initialize
     def update(self, table_name, fields):
         update_id = fields.pop('id')
         fields_name = ['`{}`=%s'.format(k) for k in fields.keys()]
         fields_name = ','.join(fields_name)
-        values = tuple(fields.values())
+        values = list(fields.values())
+        values.append(update_id)
+        values = tuple(values)
         sql_update = '''
         UPDATE
             `{}`
@@ -93,6 +98,7 @@ class MysqlOperate:
             `id`=%s;
         '''.format(table_name, fields_name, update_id)
         with self.conn.cursor() as cursor:
+            log('mysql update', table_name, sql_update, values)
             cursor.execute(sql_update, values)
 
     @check_initialize
@@ -102,8 +108,9 @@ class MysqlOperate:
         values = tuple(fields.values())
         sql = sql.format(table_name, fields_name)
         with self.conn.cursor() as cursor:
+            log('mysql _select', table_name, sql, values)
             cursor.execute(sql, values)
-            result = iter(cursor)
+            result = cursor.fetchall()
             return result
 
     @check_initialize

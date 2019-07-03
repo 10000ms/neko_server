@@ -3,6 +3,9 @@ from utils.log import log
 
 
 class Response:
+    """
+    response 对象
+    """
 
     base_header = {
         'Content-Type': 'text/html',
@@ -36,6 +39,13 @@ class Response:
         return header
 
     def add_cookie(self, key, value, *args, **kwargs):
+        """
+        因为cookie不同于一般的header可以存在多个，所以单独存放
+        :param key: cookie name
+        :param value: cookie value
+        :param args: 其他参数，HttpOnly 之类的
+        :param kwargs: 其他参数 Path='/' 之类的
+        """
         option = ''
         if len(args) != 0:
             temp_option = '; '.join(args)
@@ -53,6 +63,9 @@ class Response:
         self.header[key] = value
 
     def make_response(self):
+        """
+        生成 bytes 的 response
+        """
         header = self.formatted_header()
         header = header.encode(self.setting.standard_format)
         if not isinstance(self.body, bytes):

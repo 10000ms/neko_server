@@ -12,17 +12,23 @@
 <body>
 <div style="text-align: center">
     <form action="/note/edit?id={{ note.id }}" method="post">
-    <div>
-        <label>
-            标题：
-            <input type="text" name="title" value="{{ note.title }}"/>
-        </label>
-        <label>
-            留言：
-            <input type="text" name="content" value="{{ note.content }}"/>
-        </label>
-        <button type="submit">提交</button>
-    </div>
+        <div>
+            <div>
+                <label>
+                    标题：
+                    <input type="text" name="title" value="{{ note.title }}"/>
+                </label>
+            </div>
+            <div>
+                <label>
+                    留言：
+                    <input type="text" name="content" value="{{ note.content }}"/>
+                </label>
+            </div>
+            <div>
+                <button type="submit">提交</button>
+            </div>
+        </div>
     </form>
 </div>
 </body>

@@ -14,6 +14,9 @@ class User(Model):
     session = StringField('session')
 
     def create_session(self):
+        """
+        生成session，加到user对象的session字段里面，并返回
+        """
         s = uuid4().hex
         self.session = s
         self.save()
@@ -30,6 +33,9 @@ class User(Model):
 
     @classmethod
     def salted_password(cls, password):
+        """
+        生成加盐密码
+        """
         salted = password + cls.security_key
         hash_password = hashlib.sha256(salted.encode()).hexdigest()
         return hash_password
@@ -42,16 +48,19 @@ class User(Model):
 
     @classmethod
     def register(cls, account, password, username):
-        if len(account) > 6 and len(password) > 6 and len(username) > 2:
-            d = {
-                'account': account,
-                'password': cls.salted_password(password),
-                'username': username,
-            }
-            u = cls.new(d)
-            u.save()
-            result = '注册成功'
-        else:
-            result = '注册验证不通过'
-            u = None
+        result = '注册验证不通过'
+        u = None
+        if len(account) >= 6 and len(password) >= 6 and len(username) >= 2:
+            u = cls.find_by(account=account)
+            if u is None:
+                d = {
+                    'account': account,
+                    'password': cls.salted_password(password),
+                    'username': username,
+                }
+                u = cls.new(d)
+                u.save()
+                result = '注册成功'
+            else:
+                result = '帐号重复'
         return u, result

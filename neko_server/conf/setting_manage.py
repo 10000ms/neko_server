@@ -2,6 +2,9 @@
 
 
 class SettingManage:
+    """
+    setting管理器
+    """
 
     def __init__(self, setting):
         self._setting = setting

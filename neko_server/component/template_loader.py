@@ -3,6 +3,9 @@ import os
 
 
 class TemplateLoader:
+    """
+    模板文件加载器
+    """
 
     def __init__(self, path, encoding='utf-8'):
         self.path = path

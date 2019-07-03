@@ -8,12 +8,15 @@ from model.user import User
 
 
 def user_index(request):
+    """
+    用户主页路由
+    """
     session = request.cookies.get('session', None)
     login = False
     current_user = '未登录用户'
     if session is not None:
         u = User.current_user(session)
-        if u:
+        if u is not None:
             current_user = u.username
             login = True
     users = User.all()
@@ -26,6 +29,9 @@ def user_index(request):
 
 
 def user_login(request):
+    """
+    用户登录路由
+    """
     m = request.method
     if m == 'get':
         return render_template(request, 'user_login.html')
@@ -37,7 +43,7 @@ def user_login(request):
         if u is not None:
             r = Response(request.setting)
             session = u.create_session()
-            r.add_cookie('session', session)
+            r.add_cookie('session', session, Path='/')
             return redirect(request, '/user', response=r)
         else:
             return error(request, 400, '账号密码错误')
@@ -46,6 +52,9 @@ def user_login(request):
 
 
 def user_logout(request):
+    """
+    用户登出路由
+    """
     session = request.cookies.get('session', None)
     if session is not None:
         user = User.current_user(session)
@@ -56,6 +65,9 @@ def user_logout(request):
 
 
 def user_register(request):
+    """
+    用户注册路由
+    """
     m = request.method
     if m == 'get':
         return render_template(request, 'user_register.html')
@@ -70,7 +82,7 @@ def user_register(request):
             if u is not None:
                 r = Response(request.setting)
                 session = u.create_session()
-                r.add_cookie('session', session)
+                r.add_cookie('session', session, Path='/')
                 return redirect(request, '/user', response=r)
             else:
                 return error(request, 400, result)
@@ -82,7 +94,7 @@ def user_register(request):
 
 user_handler = {
     '/user': user_index,
-    '/user/login': user_index,
-    '/user/logout': user_index,
-    '/user/register': user_index,
+    '/user/login': user_login,
+    '/user/logout': user_logout,
+    '/user/register': user_register,
 }
