@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 
 # 框架基础配置

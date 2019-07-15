@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-from http.response import Response
-from component.render import Render
+from ..http.response import Response
+from ..component.render import Render
 
 
 def redirect(request, url, state_code=302, state_string='Found', response=None):

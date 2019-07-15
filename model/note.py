@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from neko_server.db.model import Model
 from neko_server.db.field import (
     StringField,

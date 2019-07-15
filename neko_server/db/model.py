@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 import datetime
 
-from db.mysql import MysqlOperate
-from db.field import (
+from ..db.mysql import MysqlOperate
+from ..db.field import (
     IntegerField,
     DatetimeField,
 )
-from utils.log import log
+from ..utils.log import log
 
 
 _mysql_operate = None

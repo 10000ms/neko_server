@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import pymysql
 
-from utils.log import log
+from ..utils.log import log
 
 
 def check_initialize(func):

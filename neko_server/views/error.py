@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from http.response import Response
+from ..http.response import Response
 
 error_content = """
 <!DOCTYPE html>

@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 from collections import OrderedDict
 
-from views.static import static_handler
-from views.index import index_handler
+from ..views.static import static_handler
+from ..views.index import index_handler
 
 
 def default_rule_comparator(rule, path):

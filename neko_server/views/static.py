@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import os
 
-from http.response import Response
-from views.error import error
+from ..http.response import Response
+from ..views.error import error
 
 # 常见文件对应的HTTP Content-type
 # 参考：https://tool.oschina.net/commons

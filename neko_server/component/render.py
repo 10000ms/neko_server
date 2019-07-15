@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 from enum import (
     Enum,
     auto,
 )
 
-from component.template_loader import TemplateLoader
+from ..component.template_loader import TemplateLoader
 
 
 class NodeType(Enum):

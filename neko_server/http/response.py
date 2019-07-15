@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from utils.log import log
+from ..utils.log import log
 
 
 class Response:

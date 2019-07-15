@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 from json import loads
 from urllib.parse import unquote_plus
 
-from utils.log import log
+from ..utils.log import log
 
 
 class Request:

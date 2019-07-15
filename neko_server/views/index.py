@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from views.common import render_template
+from ..views.common import render_template
 
 
 def index(request):

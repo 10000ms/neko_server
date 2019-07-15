@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from neko_server.views.common import render_template
 from neko_server.http.response import Response
 from neko_server.views.error import error

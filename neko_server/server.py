@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import socket
 import _thread
 
-from http.request import Request
-from utils.log import log
-from views.error import route_not_found
-from db.mysql import MysqlOperate
+from .http.request import Request
+from .utils.log import log
+from .views.error import route_not_found
+from .db.mysql import MysqlOperate
 
 
 def response_for_path(request, route):

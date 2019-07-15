@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 
 from neko_server.server import server_start
