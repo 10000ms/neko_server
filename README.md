@@ -38,3 +38,15 @@
 6. 留言功能演示
 
 ![](README/留言功能演示.gif)
+
+### 性能对比flask
+
+使用apache benchmark进行测试的结果，果然是没有使用IO复用，只是仅仅使用多线程就是性能不足啊...
+
+1. neko server
+
+![](README/neko_server.png)
+
+2. falsk
+
+![](README/flask.png)
