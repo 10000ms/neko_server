@@ -1,8 +1,8 @@
-# 基于Python实现的MVC Web服务器：neko server
+# 基于Python实现的MVC Web应用框架：neko server
 
 项目说明
 
-1. neko server仅依赖PyMySQL对MySQL连接进行支持，实现了完整的MVC功能的web服务器
+1. neko server实现了完整的MVC功能的web应用框架，仅依赖PyMySQL对MySQL进行连接
 2. 浏览器请求通过TCP连接进来后会通过分析生成request类，使用对应的函数进行处理
 3. Router会解析设置的路由规则和request path进行匹配，返回正确的处理函数，或返回404处理函数
 4. 处理函数返回response类，可以设置响应的头部，可以返回文件。neko server会处理成正确的响应返回浏览器
