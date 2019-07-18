@@ -19,6 +19,8 @@
 
 ![](README/demo主页.png)
 
+![](README/打开首页.gif)
+
 2. 用户管理
 
 ![](README/用户管理.png)
@@ -39,14 +41,8 @@
 
 ![](README/留言功能演示.gif)
 
-### 性能对比flask
+### 性能测试
 
-使用apache benchmark进行测试的结果，果然是没有使用IO复用，只是仅仅使用多线程就是性能不足啊...
-
-1. neko server
+使用apache benchmark进行测试的结果
 
 ![](README/neko_server.png)
-
-2. falsk
-
-![](README/flask.png)
