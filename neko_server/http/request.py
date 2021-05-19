@@ -2,6 +2,7 @@ from json import loads
 from urllib.parse import unquote_plus
 
 from ..utils.log import log
+from .header import HttpHeader
 
 
 class Request:
@@ -80,3 +81,63 @@ class Request:
                     self.query[k] = v
         else:
             self.path = part
+
+
+class RawRequestHandler:
+    """
+    TODO
+
+    1. 支持HTTP版本：1.0、1.1 的 keep alive机制，header：Connection
+    2. body长度的处理以区分不同的request使用同一个connection，header：Content-Length、Transfer-Encoding
+    3. body压缩，header：Content-Encoding
+
+    处理逻辑
+    1. 使用 unhandler_buffer 放置未处理的buffer
+    2. 逐个字节的向unhandler_buffer加入数据
+    3. unhandler_buffer可以处理的判断使用传入的函数判断
+    4. unhandler_buffer可能放置的是header或者是body
+
+    5. 增加对connection是否保持的判断
+    6. 增加异常情况的处理
+
+    """
+
+    def __init__(self, connection, buffer_size):
+        self.connection = connection
+        self.buffer_size = buffer_size
+        self._buffer = b''
+
+        self.http_header = HttpHeader()
+        self.header_check_index = None
+        self.http_header_end = False
+        self.current_content_length = None
+        self.done = False
+
+    @property
+    def read_size(self):
+        if self.current_content_length and self.current_content_length < self.buffer_size:
+            return self.current_content_length
+        else:
+            return self.buffer_size
+
+    def
+
+    def check_header_end(self):
+        if self.http_header_end is True:
+            return
+        for
+
+    def check_single_request_end(self):
+        pass
+
+    def single_step(self):
+        buffer = self.connection.recv(self.read_size)
+        if buffer == b'':
+            raise Exception('客户端请求关闭')
+        self._buffer += buffer
+        self.check_header_end()
+        self.check_single_request_end()
+
+    def run(self):
+        while self.done is not False:
+            self.single_step()
