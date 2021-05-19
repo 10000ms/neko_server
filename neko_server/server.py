@@ -1,4 +1,5 @@
 import socket
+import selectors
 import _thread
 
 from .http.request import Request
@@ -64,7 +65,7 @@ def set_model(setting):
     MysqlOperate.db = setting.mysql['db']
 
 
-def server_start(setting, route):
+def server_start_with_multi_thread(setting, route):
     """
     启动服务器
     """
@@ -82,3 +83,56 @@ def server_start(setting, route):
             connection, address = s.accept()
             log('accept ip: <{}>'.format(address))
             _thread.start_new_thread(process_request, (connection, setting, route))
+
+
+def process_request_multiplexing(selector, connection, setting, route):
+    with connection as c:
+        r = request_from_connection(c, setting)
+        log('accept request\n <{}>'.format(r))
+        if request_validation(r) is True:
+            request = Request(r, setting)
+            response = response_for_path(request, route)
+            r = response.make_response()
+            log('send response\n <{}>'.format(r))
+            c.sendall(r)
+        selector.unregister(connection)
+
+
+def process_accept(selector, accept_socket, setting, route):
+    connection, address = accept_socket.accept()
+    log('accept ip: <{}>'.format(address))
+    connection.setblocking(False)
+    selector.register(
+        fileobj=connection,
+        events=selectors.EVENT_READ,
+        data=process_request_multiplexing
+    )
+
+
+def server_start_with_multiplexing(setting, route):
+    """
+    启动服务器
+    """
+    host = setting.host
+    port = setting.port
+
+    set_model(setting)
+
+    log('start web server in {}:{}'.format(host, port))
+
+    with socket.socket() as s:
+        s.setblocking(False)
+        server_address = (host, port)
+        s.bind(server_address)
+        s.listen()
+
+        with selectors.DefaultSelector() as selector:
+            selector.register(
+                fileobj=s,
+                events=selectors.EVENT_READ,
+                data=process_accept
+            )
+            while True:
+                events = selector.select(timeout=0.1)
+                for key, _ in events:
+                    key.data(selector, key.fileobj, setting, route)

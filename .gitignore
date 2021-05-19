@@ -9,6 +9,7 @@ Desktop.ini
 *.egg
 *.egg-info
 build
+venv
 
 # My configurations:
 .idea

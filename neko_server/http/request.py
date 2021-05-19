@@ -48,6 +48,8 @@ class Request:
     def add_headers(self, header):
         """
         处理头部信息
+
+        # TODO header 的key需要处理成标准的模式
         :param header:
             Host: localhost:9654
             Connection: keep-alive
@@ -73,7 +75,8 @@ class Request:
             self.path, query_string = part.split('?', 1)
             args = query_string.split('&')
             for a in args:
-                k, v = a.split('=')
-                self.query[k] = v
+                if '=' in a:
+                    k, v = a.split('=')
+                    self.query[k] = v
         else:
             self.path = part
