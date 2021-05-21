@@ -1,8 +1,13 @@
+import typing
 import socket
 import selectors
 import _thread
+import functools
 
-from .http.request import Request
+from .http.request import (
+    Request,
+    RawRequestHandler,
+)
 from .utils.log import log
 from .views.error import route_not_found
 from .db.mysql import MysqlOperate
@@ -85,27 +90,56 @@ def server_start_with_multi_thread(setting, route):
             _thread.start_new_thread(process_request, (connection, setting, route))
 
 
-def process_request_multiplexing(selector, connection, setting, route):
-    with connection as c:
-        r = request_from_connection(c, setting)
-        log('accept request\n <{}>'.format(r))
-        if request_validation(r) is True:
-            request = Request(r, setting)
-            response = response_for_path(request, route)
-            r = response.make_response()
-            log('send response\n <{}>'.format(r))
-            c.sendall(r)
+def response_for_path_multiplexing(request, connection, route):
+    """
+    根据 path 调用相应的处理函数
+    没有处理的 path 会返回 404
+    """
+    r = route
+    c = connection
+    request_handler = r.get(request.path, route_not_found)
+    log('request_handler', request_handler)
+    response = request_handler(request)
+    if hasattr(response, 'make_response'):
+        resp = response.make_response()
+        log('send response\n <{}>'.format(resp))
+        c.sendall(resp)
+    else:
+        raise TypeError('返回类型错误，必须为http.response.Response或其子类, 而返回的是：<{}>'.format(response))
+
+
+def process_request_multiplexing(selector, connection, handler):
+    end_connect = handler.process()
+    if end_connect is True:
         selector.unregister(connection)
+        connection.close()
+
+
+class TaskItem:
+
+    def __init__(self, func: typing.Callable, params_dict: typing.Dict):
+        self.func = func
+        self.params_dict = params_dict
 
 
 def process_accept(selector, accept_socket, setting, route):
     connection, address = accept_socket.accept()
     log('accept ip: <{}>'.format(address))
     connection.setblocking(False)
+    handler = RawRequestHandler(
+        settings=setting,
+        connection=connection,
+        buffer_size=1024,
+        request_handler=functools.partial(response_for_path_multiplexing, route=route),
+    )
+    t = TaskItem(
+        func=process_request_multiplexing,
+        params_dict=dict(selector=selector, connection=connection, handler=handler)
+    )
     selector.register(
         fileobj=connection,
         events=selectors.EVENT_READ,
-        data=process_request_multiplexing
+        data=t
     )
 
 
@@ -127,12 +161,18 @@ def server_start_with_multiplexing(setting, route):
         s.listen()
 
         with selectors.DefaultSelector() as selector:
+            t = TaskItem(
+                func=process_accept,
+                params_dict=dict(selector=selector, accept_socket=s, setting=setting, route=route)
+            )
             selector.register(
                 fileobj=s,
                 events=selectors.EVENT_READ,
-                data=process_accept
+                data=t
             )
             while True:
                 events = selector.select(timeout=0.1)
                 for key, _ in events:
-                    key.data(selector, key.fileobj, setting, route)
+                    f = key.data.func
+                    params = key.data.params_dict
+                    f(**params)
