@@ -59,7 +59,7 @@ def static(request):
         else:
             content_type = default_type
         with open(path, 'rb') as f:
-            r = Response(request.setting, f.read())
+            r = Response(request, request.setting, f.read())
             r.add_header('Content-Type', content_type)
             return r
     else:

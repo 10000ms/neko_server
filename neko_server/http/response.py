@@ -10,8 +10,9 @@ class Response:
         'Content-Type': 'text/html',
     }
 
-    def __init__(self, setting, body=''):
-        self.version = 'HTTP/1.x'
+    def __init__(self, request, setting, body=''):
+        self.request = request
+        self.version = self.request.version
         self.state_code = 200
         self.state_string = setting.http_state[200]
         self.header = self.base_header.copy()

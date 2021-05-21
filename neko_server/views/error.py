@@ -19,7 +19,7 @@ def error(request, state_code=404, state_string=None, content=None):
         state_string = e.get(state_code, e[500])
     if content is None:
         content = error_content.format(state_string)
-    r = Response(request.setting, content)
+    r = Response(request, request.setting, content)
     r.set_state(state_code, state_string)
     return r
 

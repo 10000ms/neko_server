@@ -4,7 +4,7 @@ from ..component.render import Render
 
 def redirect(request, url, state_code=302, state_string='Found', response=None):
     if response is None:
-        r = Response(request.setting)
+        r = Response(request, request.setting)
     else:
         r = response
     r.add_header('Location', url)
@@ -17,5 +17,5 @@ def render_template(request, template, environment=None):
         environment = {}
     s = request.setting
     content = Render(s).render(template, environment)
-    r = Response(request.setting, content)
+    r = Response(request, request.setting, content)
     return r

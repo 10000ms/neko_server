@@ -40,7 +40,7 @@ def user_login(request):
         password = d['password']
         u = User.login(account, password)
         if u is not None:
-            r = Response(request.setting)
+            r = Response(request, request.setting)
             session = u.create_session()
             r.add_cookie('session', session, Path='/')
             return redirect(request, '/user', response=r)
@@ -79,7 +79,7 @@ def user_register(request):
         if repeat_password == password:
             u, result = User.register(account, password, username)
             if u is not None:
-                r = Response(request.setting)
+                r = Response(request, request.setting)
                 session = u.create_session()
                 r.add_cookie('session', session, Path='/')
                 return redirect(request, '/user', response=r)
