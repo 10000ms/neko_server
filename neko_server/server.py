@@ -3,6 +3,9 @@ import socket
 import selectors
 import _thread
 import functools
+import os
+import multiprocessing
+import errno
 
 from .http.request import (
     Request,
@@ -133,7 +136,13 @@ class TaskItem:
 
 
 def process_accept(selector, accept_socket, setting, route):
-    connection, address = accept_socket.accept()
+    try:
+        connection, address = accept_socket.accept()
+    except socket.error as e:
+        if e.errno == errno.EAGAIN:
+            return None
+        else:
+            raise
     log('accept ip: <{}>'.format(address))
     connection.setblocking(False)
     handler = RawRequestHandler(
@@ -153,7 +162,7 @@ def process_accept(selector, accept_socket, setting, route):
     )
 
 
-def server_start_with_multiplexing(setting, route):
+def server_start_with_selector(setting, route):
     """
     启动服务器
     """
@@ -186,3 +195,50 @@ def server_start_with_multiplexing(setting, route):
                     f = key.data.func
                     params = key.data.params_dict
                     f(**params)
+
+
+def server_start_with_selector_and_multiprocessing(setting, route):
+    """
+    启动服务器
+    """
+    host = setting.host
+    port = setting.port
+
+    set_model(setting)
+
+    log('start web server in {}:{}'.format(host, port))
+
+    def multiprocessing_func(accept_socket):
+        with selectors.DefaultSelector() as selector:
+            t = TaskItem(
+                func=process_accept,
+                params_dict=dict(selector=selector, accept_socket=accept_socket, setting=setting, route=route)
+            )
+            selector.register(
+                fileobj=s,
+                events=selectors.EVENT_READ,
+                data=t
+            )
+            while True:
+                events = selector.select(timeout=0.1)
+                for key, _ in events:
+                    f = key.data.func
+                    params = key.data.params_dict
+                    f(**params)
+
+    with socket.socket() as s:
+        s.setblocking(False)
+        server_address = (host, port)
+        s.bind(server_address)
+        s.listen()
+
+        log('cpu count', os.cpu_count())
+        p_list = []
+        for i in range(os.cpu_count()):
+            p = multiprocessing.Process(target=multiprocessing_func, args=(s,))
+            log('open one processing')
+            p.start()
+            p_list.append(p)
+
+        for i in p_list:
+            i.join()
