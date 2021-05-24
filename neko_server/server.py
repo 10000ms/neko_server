@@ -97,6 +97,7 @@ def response_for_path_multiplexing(request, connection, route):
     """
     r = route
     c = connection
+    log(f'get request\n <{request.raw_header}> <{request.raw_body}>')
     request_handler = r.get(request.path, route_not_found)
     log('request_handler', request_handler)
     response = request_handler(request)
@@ -108,11 +109,20 @@ def response_for_path_multiplexing(request, connection, route):
         raise TypeError('返回类型错误，必须为http.response.Response或其子类, 而返回的是：<{}>'.format(response))
 
 
+def close_connection(connection):
+    try:
+        connection.shutdown(socket.SHUT_RDWR)
+    except OSError as e:
+        log('connection.shutdown e', e)
+    connection.close()
+
+
 def process_request_multiplexing(selector, connection, handler):
+    log('in process_request_multiplexing')
     end_connect = handler.process()
     if end_connect is True:
         selector.unregister(connection)
-        connection.close()
+        close_connection(connection)
 
 
 class TaskItem:

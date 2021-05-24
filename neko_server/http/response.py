@@ -66,10 +66,16 @@ class Response:
         """
         生成 bytes 的 response
         """
-        header = self.formatted_header()
-        header = header.encode(self.setting.standard_format)
         if not isinstance(self.body, bytes):
             self.body = self.body.encode(self.setting.standard_format)
+        content_length = len(self.body)
+        self.add_header('Content-Length', str(content_length))
+        if self.request.keep_alive is True:
+            self.add_header('Connection', 'Keep-Alive')
+        else:
+            self.add_header('Connection', 'Close')
+        header = self.formatted_header()
+        header = header.encode(self.setting.standard_format)
         r = header + b'\r\n' + self.body
 
         log('Response make_response \r\n', r)

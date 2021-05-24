@@ -1,3 +1,6 @@
+import socket
+import errno
+import time
 from json import loads
 from urllib.parse import unquote_plus
 
@@ -38,6 +41,7 @@ class Request:
         self.add_headers(h[1:])
 
         self.setting = setting
+        self.keep_alive = False
 
         log('Request init over', self.__dict__)
 
@@ -102,6 +106,7 @@ class RequestV2:
         self.raw_body = b''
         self.setting = setting
         self.end_parse_header = False
+        self.keep_alive = False
 
     def parse_header(self):
         header = self.raw_header.decode()
@@ -204,21 +209,31 @@ class RawRequestHandler:
         self.end_connect = False
 
     def header_end_func(self):
-        if self.unhandler_buffer[-4:] == b'\r\n\r\n':
+        if self.unhandler_buffer[-4:] == b'\r\n\r\n' and len(self.unhandler_buffer) == 4:
+            # 特殊请求，保持连接，清空unhandler_buffer，不处理
+            self.unhandler_buffer = b''
+        elif self.unhandler_buffer[-4:] == b'\r\n\r\n':
             self.current_request.raw_header = self.unhandler_buffer[:-4]
             self.current_request.parse_header()
             self.unhandler_buffer = b''
+            if not self.current_request.content_length:
+                # 确认是否需要关闭连接
+                self.check_end_connect()
+                # 重新使用一个request
+                self.current_request.keep_alive = self.end_connect is False
+                self.waiting_handler_request.append(self.current_request)
+                self.current_request = RequestV2(self.settings)
 
     def check_end_connect(self):
         connection_key = 'Connection'
-        if self.current_request.version in ['1.0', '1.1']:
-            if self.current_request.version == '1.0':
+        if self.current_request.version in ['HTTP/1.0', 'HTTP/1.1']:
+            if self.current_request.version == 'HTTP/1.0':
                 if (connection_key not in self.current_request.headers
-                        or self.current_request.headers[connection_key].value != 'keep-alive'):
+                        or self.current_request.headers[connection_key].value not in ['keep-alive', 'Keep-Alive']):
                     self.end_connect = True
-            elif self.current_request.version == '1.1':
+            elif self.current_request.version == 'HTTP/1.1':
                 if (connection_key in self.current_request.headers
-                        and self.current_request.headers[connection_key].value == 'close'):
+                        and self.current_request.headers[connection_key].value in ['close', 'Close']):
                     self.end_connect = True
         else:
             self.end_connect = True
@@ -231,18 +246,9 @@ class RawRequestHandler:
             # 确认是否需要关闭连接
             self.check_end_connect()
             # 重新使用一个request
+            self.current_request.keep_alive = self.end_connect is False
             self.waiting_handler_request.append(self.current_request)
             self.current_request = RequestV2(self.settings)
-        elif self.current_request.content_length == 0:
-            self.current_request.parse_body()
-            self.unhandler_buffer = b''
-            # 确认是否需要关闭连接
-            self.check_end_connect()
-            # 重新使用一个request
-            self.waiting_handler_request.append(self.current_request)
-            self.current_request = RequestV2(self.settings)
-        elif self.current_request.content_length is None and not self.current_request.no_body_request():
-            self.end_connect = True
 
     @property
     def handle_func(self):
@@ -252,29 +258,35 @@ class RawRequestHandler:
             return self.body_end_func
 
     def parse(self, buffer):
-        log('buffer parse')
-        log(buffer)
-        log(self.unhandler_buffer)
         for integer in buffer:
             self.unhandler_buffer += bytes([integer])
             f = self.handle_func
             f()
 
     def read_step(self):
-        log('read_step')
-        buffer = self.connection.recv(self.buffer_size)
+        buffer = None
+        try:
+            buffer = self.connection.recv(self.buffer_size)
+        except socket.error as e:
+            if e.errno == errno.EAGAIN:
+                return None
         if buffer == b'':
-            raise HTTPError('客户端请求关闭')
-        self.parse(buffer)
+            # 客户端请求关闭
+            self.end_connect = True
+            log('客户端请求关闭')
+        elif buffer is not None:
+            self.parse(buffer)
 
     def process(self):
-        log('process')
         while self.end_connect is False or len(self.waiting_handler_request) > 0:
             # 如果有没有处理的请求，先处理请求
             if len(self.waiting_handler_request) > 0:
                 for r in self.waiting_handler_request:
                     self.request_handler(request=r, connection=self.connection)
-                return self.end_connect
+                self.waiting_handler_request = []
+                if self.unhandler_buffer == b'':
+                    log('process return', self.end_connect)
+                    return self.end_connect
             else:
                 try:
                     self.read_step()
@@ -284,4 +296,5 @@ class RawRequestHandler:
                 except HTTPError as e:
                     log_error(f'process, HTTPError: {e}')
                     return True
+        log('process return', self.end_connect)
         return self.end_connect

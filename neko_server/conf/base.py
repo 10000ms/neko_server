@@ -10,7 +10,7 @@ setting = dict(
     security_key='63865f1c34cc4ba2bfa72032de6d9d03',
 
     http_state={
-        200: 'Ok',
+        200: 'OK',
         400: 'Bad Request',
         403: 'Forbidden',
         404: 'Not Found',
