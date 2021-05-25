@@ -4,6 +4,8 @@ from neko_server.server import (
     server_start_with_multi_thread,
     server_start_with_selector,
     server_start_with_selector_and_multiprocessing,
+    server_start_with_uvloop,
+    server_start_with_uvloop_and_multiprocessing,
 )
 from neko_server.component.route import Router
 from neko_server.conf.base import setting as base
@@ -59,8 +61,10 @@ def main():
     r = route()
     # 启动服务器
     # server_start_with_multi_thread(s, r)
-    # server_start_with_multiplexing(s, r)
-    server_start_with_selector_and_multiprocessing(s, r)
+    # server_start_with_selector(s, r)
+    # server_start_with_selector_and_multiprocessing(s, r)
+    # server_start_with_uvloop(s, r)
+    server_start_with_uvloop_and_multiprocessing(s, r)
 
 
 if __name__ == '__main__':

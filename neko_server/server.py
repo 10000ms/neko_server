@@ -1,3 +1,5 @@
+import asyncio
+import uvloop
 import typing
 import socket
 import selectors
@@ -93,7 +95,7 @@ def server_start_with_multi_thread(setting, route):
             _thread.start_new_thread(process_request, (connection, setting, route))
 
 
-def response_for_path_multiplexing(request, connection, route):
+def response_for_path_selector(request, connection, route):
     """
     根据 path 调用相应的处理函数
     没有处理的 path 会返回 404
@@ -120,9 +122,17 @@ def close_connection(connection):
     connection.close()
 
 
-def process_request_multiplexing(selector, connection, handler):
-    log('in process_request_multiplexing')
+def process_request_with_selector(selector, connection, handler):
+    log('in process_request_with_selector')
     end_connect = handler.process()
+    if end_connect is True:
+        selector.unregister(connection)
+        close_connection(connection)
+
+
+async def process_request_with_selector_async(selector, connection, handler):
+    log('in process_request_with_selector_async')
+    end_connect = await handler.process_async()
     if end_connect is True:
         selector.unregister(connection)
         close_connection(connection)
@@ -149,10 +159,37 @@ def process_accept(selector, accept_socket, setting, route):
         settings=setting,
         connection=connection,
         buffer_size=1024,
-        request_handler=functools.partial(response_for_path_multiplexing, route=route),
+        request_handler=functools.partial(response_for_path_selector, route=route),
     )
     t = TaskItem(
-        func=process_request_multiplexing,
+        func=process_request_with_selector,
+        params_dict=dict(selector=selector, connection=connection, handler=handler)
+    )
+    selector.register(
+        fileobj=connection,
+        events=selectors.EVENT_READ,
+        data=t
+    )
+
+
+async def process_accept_async(selector, accept_socket, setting, route):
+    try:
+        connection, address = accept_socket.accept()
+    except socket.error as e:
+        if e.errno == errno.EAGAIN:
+            return None
+        else:
+            raise
+    log('accept ip: <{}>'.format(address))
+    connection.setblocking(False)
+    handler = RawRequestHandler(
+        settings=setting,
+        connection=connection,
+        buffer_size=1024,
+        request_handler=functools.partial(response_for_path_selector, route=route),
+    )
+    t = TaskItem(
+        func=process_request_with_selector_async,
         params_dict=dict(selector=selector, connection=connection, handler=handler)
     )
     selector.register(
@@ -225,6 +262,102 @@ def server_start_with_selector_and_multiprocessing(setting, route):
                     f = key.data.func
                     params = key.data.params_dict
                     f(**params)
+
+    with socket.socket() as s:
+        s.setblocking(False)
+        server_address = (host, port)
+        s.bind(server_address)
+        s.listen()
+
+        log('cpu count', os.cpu_count())
+        p_list = []
+        for i in range(os.cpu_count()):
+            p = multiprocessing.Process(target=multiprocessing_func, args=(s,))
+            log('open one processing')
+            p.start()
+            p_list.append(p)
+
+        for i in p_list:
+            i.join()
+
+
+def server_start_with_uvloop(setting, route):
+    """
+    启动服务器
+    """
+    host = setting.host
+    port = setting.port
+
+    set_model(setting)
+
+    log('start web server in {}:{}'.format(host, port))
+
+    async def func(accept_socket):
+        with selectors.DefaultSelector() as selector:
+            t = TaskItem(
+                func=process_accept_async,
+                params_dict=dict(selector=selector, accept_socket=accept_socket, setting=setting, route=route)
+            )
+            selector.register(
+                fileobj=s,
+                events=selectors.EVENT_READ,
+                data=t
+            )
+            while True:
+                events = selector.select(0.1)
+                if len(events) > 0:
+                    for key, _ in events:
+                        f = key.data.func
+                        params = key.data.params_dict
+                        await f(**params)
+                else:
+                    await asyncio.sleep(0.1)
+
+    with socket.socket() as s:
+        s.setblocking(False)
+        server_address = (host, port)
+        s.bind(server_address)
+        s.listen()
+
+        uvloop.install()
+        asyncio.run(func(s))
+
+
+def server_start_with_uvloop_and_multiprocessing(setting, route):
+    """
+    启动服务器
+    """
+    host = setting.host
+    port = setting.port
+
+    set_model(setting)
+
+    log('start web server in {}:{}'.format(host, port))
+
+    async def func(accept_socket):
+        with selectors.DefaultSelector() as selector:
+            t = TaskItem(
+                func=process_accept_async,
+                params_dict=dict(selector=selector, accept_socket=accept_socket, setting=setting, route=route)
+            )
+            selector.register(
+                fileobj=s,
+                events=selectors.EVENT_READ,
+                data=t
+            )
+            while True:
+                events = selector.select(0.1)
+                if len(events) > 0:
+                    for key, _ in events:
+                        f = key.data.func
+                        params = key.data.params_dict
+                        await f(**params)
+                else:
+                    await asyncio.sleep(0.1)
+
+    def multiprocessing_func(accept_socket):
+        uvloop.install()
+        asyncio.run(func(accept_socket))
 
     with socket.socket() as s:
         s.setblocking(False)

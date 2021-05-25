@@ -1,3 +1,4 @@
+import asyncio
 import socket
 import errno
 import time
@@ -277,6 +278,20 @@ class RawRequestHandler:
         elif buffer is not None:
             self.parse(buffer)
 
+    async def read_step_async(self):
+        buffer = None
+        try:
+            buffer = self.connection.recv(self.buffer_size)
+        except socket.error as e:
+            if e.errno == errno.EAGAIN:
+                return None
+        if buffer == b'':
+            # 客户端请求关闭
+            self.end_connect = True
+            log('客户端请求关闭')
+        elif buffer is not None:
+            self.parse(buffer)
+
     def process(self):
         while self.end_connect is False or len(self.waiting_handler_request) > 0:
             # 如果有没有处理的请求，先处理请求
@@ -290,6 +305,28 @@ class RawRequestHandler:
             else:
                 try:
                     self.read_step()
+                except IOError as e:
+                    log_error(f'process, IOError: {e}')
+                    return self.end_connect
+                except HTTPError as e:
+                    log_error(f'process, HTTPError: {e}')
+                    return True
+        log('process return', self.end_connect)
+        return self.end_connect
+
+    async def process_async(self):
+        while self.end_connect is False or len(self.waiting_handler_request) > 0:
+            # 如果有没有处理的请求，先处理请求
+            if len(self.waiting_handler_request) > 0:
+                for r in self.waiting_handler_request:
+                    self.request_handler(request=r, connection=self.connection)
+                self.waiting_handler_request = []
+                if self.unhandler_buffer == b'':
+                    log('process return', self.end_connect)
+                    return self.end_connect
+            else:
+                try:
+                    await self.read_step_async()
                 except IOError as e:
                     log_error(f'process, IOError: {e}')
                     return self.end_connect
